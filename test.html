@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Curso Contábil</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    .slide { display: none; padding: 40px; text-align: center; }
+    .ativo { display: block; }
+    button { padding: 10px 20px; margin-top: 20px; cursor: pointer; border: none; border-radius: 6px; }
+    .aula-btn { display: block; margin: 10px auto; width: 200px; }
+    .bloqueado { background: #ccc; cursor: not-allowed; }
+    .ativo-btn { background: #4CAF50; color: white; }
+    #certificado { border: 2px solid #333; padding: 30px; background: white; display: inline-block; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <!-- Slide 1: Login -->
+  <div id="slide1" class="slide ativo">
+    <h2>Login no Curso</h2>
+    <input type="text" id="nome" placeholder="Seu nome"><br><br>
+    <button id="loginBtn">Entrar</button>
+  </div>
+
+  <!-- Slide 2: Lista de Aulas -->
+  <div id="slide2" class="slide">
+    <h2>Bem-vindo, <span id="usuarioNome"></span></h2>
+    <p>Selecione uma aula:</p>
+    <div id="listaAulas"></div>
+    <button id="sairBtn">Sair</button>
+  </div>
+
+  <!-- Slides 3–5: Aulas -->
+  <div id="slide3" class="slide"><h2>Aula 1</h2><p>Conteúdo da aula 1.</p><button onclick="concluirAula(1)">Concluir Aula 1</button></div>
+  <div id="slide4" class="slide"><h2>Aula 2</h2><p>Conteúdo da aula 2.</p><button onclick="concluirAula(2)">Concluir Aula 2</button></div>
+  <div id="slide5" class="slide"><h2>Aula 3</h2><p>Conteúdo da aula 3.</p><button onclick="concluirAula(3)">Concluir Aula 3</button></div>
+
+  <!-- Slide 6: Relatório Final -->
+  <div id="slide6" class="slide">
+    <h2>Relatório Final</h2>
+    <div id="relatorio"></div>
+    <button id="gerarCertBtn">Gerar Certificado (PDF)</button>
+    <button onclick="mostrarSlide(2)">Voltar ao Curso</button>
+  </div>
+
+  <!-- Firebase + Script principal -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { jsPDF } from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+
+    // 🔹 Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      projectId: "SEU_PROJETO",
+      storageBucket: "SEU_PROJETO.appspot.com",
+      messagingSenderId: "XXXXXXX",
+      appId: "X:XXXXXXX:web:XXXXXX"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 🔸 Controle de slides
+    const slides = document.querySelectorAll('.slide');
+    const listaAulasDiv = document.getElementById('listaAulas');
+
+    function mostrarSlide(n) {
+      slides.forEach(s => s.classList.remove('ativo'));
+      document.getElementById('slide' + n).classList.add('ativo');
+    }
+
+    // 🔹 Login
+    const loginBtn = document.getElementById('loginBtn');
+    loginBtn.addEventListener('click', async () => {
+      const nome = document.getElementById('nome').value.trim();
+      if (!nome) return alert('Digite seu nome');
+
+      const userId = nome.toLowerCase().replace(/\s+/g, '_');
+      localStorage.setItem('userId', userId);
+
+      const userRef = doc(db, 'usuarios', userId);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          nome: nome,
+          aulas: [true, false, false],
+          dataInicio: new Date().toISOString()
+        });
+      }
+
+      document.getElementById('usuarioNome').innerText = nome;
+      carregarAulas();
+      mostrarSlide(2);
+    });
+
+    // 🔹 Carregar lista de aulas
+    async function carregarAulas() {
+      const userId = localStorage.getItem('userId');
+      const userRef = doc(db, 'usuarios', userId);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) return;
+      const { aulas } = userSnap.data();
+
+      listaAulasDiv.innerHTML = '';
+
+      aulas.forEach((ativa, i) => {
+        const btn = document.createElement('button');
+        btn.innerText = `Aula ${i + 1}`;
+        btn.className = 'aula-btn';
+        if (ativa) {
+          btn.classList.add('ativo-btn');
+          btn.onclick = () => mostrarSlide(i + 3);
+        } else {
+          btn.classList.add('bloqueado');
+          btn.disabled = true;
+        }
+        listaAulasDiv.appendChild(btn);
+      });
+
+      // Se todas concluídas, habilita relatório
+      if (aulas.every(a => a)) mostrarSlide(6);
+    }
+
+    // 🔹 Concluir aula
+    async function concluirAula(indice) {
+      const userId = localStorage.getItem('userId');
+      const userRef = doc(db, 'usuarios', userId);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) return;
+
+      const data = userSnap.data();
+      if (indice < data.aulas.length) data.aulas[indice] = true;
+
+      // Se todas concluídas → grava dataFinal
+      if (data.aulas.every(a => a)) {
+        data.dataFim = new Date().toISOString();
+        data.nota = 10;
+      }
+
+      await setDoc(userRef, data);
+      alert(`Aula ${indice} concluída!`);
+      carregarAulas();
+
+      // Se completou tudo → relatório
+      if (data.aulas.every(a => a)) gerarRelatorio();
+      else mostrarSlide(2);
+    }
+
+    // 🔹 Relatório final
+    async function gerarRelatorio() {
+      const userId = localStorage.getItem('userId');
+      const userRef = doc(db, 'usuarios', userId);
+      const userSnap = await getDoc(userRef);
+      const data = userSnap.data();
+
+      const nome = data.nome;
+      const dataInicio = new Date(data.dataInicio).toLocaleDateString('pt-BR');
+      const dataFim = new Date(data.dataFim).toLocaleDateString('pt-BR');
+      const nota = data.nota ?? 10;
+
+      document.getElementById('relatorio').innerHTML = `
+        <div id="certificado">
+          <h3>Certificado de Conclusão</h3>
+          <p>Certificamos que <strong>${nome}</strong> concluiu com êxito o curso de Contabilidade.</p>
+          <p><b>Início:</b> ${dataInicio}</p>
+          <p><b>Conclusão:</b> ${dataFim}</p>
+          <p><b>Nota final:</b> ${nota}</p>
+          <p><i>Emitido automaticamente pelo sistema.</i></p>
+        </div>
+      `;
+      mostrarSlide(6);
+    }
+
+    // 🔹 Gerar PDF
+    document.getElementById('gerarCertBtn').addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      const docPDF = new jsPDF();
+      const cert = document.getElementById('certificado').innerText;
+      docPDF.text(cert, 10, 20);
+      docPDF.save('certificado.pdf');
+    });
+
+    // 🔹 Sair
+    document.getElementById('sairBtn').addEventListener('click', () => {
+      localStorage.removeItem('userId');
+      mostrarSlide(1);
+    });
+
+    // Disponibiliza globalmente
+    window.concluirAula = concluirAula;
+  </script>
+</body>
+</html>
