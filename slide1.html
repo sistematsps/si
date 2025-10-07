@@ -1,1 +1,380 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Apresentação Interativa - Curso</title>
+<style>
+  :root{
+    --bg:#0f1724;
+    --card:#0b1220;
+    --text:#e6eef8;
+    --accent:#3b82f6;
+    --muted:#9aa9c4;
+  }
+  html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+  body{background:linear-gradient(180deg,#061026,#071833);color:var(--text);display:flex;align-items:center;justify-content:center;padding:20px;}
+  .deck{width:100%;max-width:1100px;height:620px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;box-shadow:0 20px 50px rgba(2,6,23,0.6);position:relative;overflow:hidden;padding:24px;box-sizing:border-box;}
+  .slide{display:none;width:100%;height:100%;box-sizing:border-box;padding:30px;position:absolute;inset:0;}
+  .slide.active{display:block;}
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  h1{margin:0;font-size:20px}
+  .subtitle{color:var(--muted);font-size:13px}
+  .content{background:rgba(255,255,255,0.02);border-radius:10px;height:calc(100% - 64px);padding:28px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;overflow:auto}
+  .center{display:flex;align-items:center;justify-content:center;height:100%}
+  button{background:var(--accent);border:none;padding:10px 14px;border-radius:8px;color:white;font-weight:600;cursor:pointer}
+  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
+  .small{padding:6px 10px;font-size:14px;border-radius:7px}
+  .inputs{display:flex;flex-direction:column;gap:8px;width:360px}
+  input[type="text"]{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);outline:none}
+  label{font-size:13px;color:var(--muted)}
+  .slides-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .card{background:rgba(255,255,255,0.02);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+  .footer-bar{position:absolute;left:0;right:0;bottom:0;padding:12px 24px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg, transparent, rgba(0,0,0,0.25));}
+  .slide-number{color:var(--muted);font-size:13px}
+  .nav-btns{display:flex;gap:8px}
+  .error{color:#ffb3b3;background:rgba(255,50,50,0.06);padding:8px;border-radius:8px;border:1px solid rgba(255,50,50,0.08)}
+  /* modal logs */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:9999}
+  .modal{background:var(--card);width:90%;max-width:900px;border-radius:10px;padding:18px;box-sizing:border-box;max-height:80vh;overflow:auto;border:1px solid rgba(255,255,255,0.03)}
+  .log-row{display:flex;justify-content:space-between;gap:10px;padding:8px;border-bottom:1px dashed rgba(255,255,255,0.02);font-size:13px}
+  .muted{color:var(--muted);font-size:13px}
+  .kbd{background:rgba(255,255,255,0.03);padding:6px;border-radius:6px;font-weight:600;font-size:13px}
+  /* responsive */
+  @media(max-width:720px){
+    .content{padding:16px}
+    .inputs{width:100%}
+    .deck{height:100vh;padding:16px;border-radius:0}
+  }
+</style>
+</head>
+<body>
+  <div class="deck" role="application" aria-label="Apresentação interativa">
+    <!-- Slide 0: descrição do curso -->
+    <div class="slide active" id="slide-0" data-index="0">
+      <div class="header"><h1>Descrição do Curso</h1><div class="subtitle">Slide 0</div></div>
+      <div class="content">
+        <div>
+          <!-- Editável: altere o texto aqui -->
+          <div id="course-desc" contenteditable="true" style="min-height:140px;padding:12px;border-radius:8px;background:rgba(255,255,255,0.01);border:1px dashed rgba(255,255,255,0.02);">
+            <h2>Insira aqui a descrição do curso</h2>
+            <p>Você pode editar este texto diretamente — clique e escreva a descrição do curso.</p>
+          </div>
+        </div>
+        <div style="margin-top:auto;display:flex;gap:12px;align-items:center;">
+          <button id="btn-access" class="small">Acessar Curso</button>
+          <div class="muted">Dica: pressione <span class="kbd">→</span> ou clique para navegar.</div>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <div class="slide-number">Slide 0</div>
+        <div class="nav-btns">
+          <button id="next-0" class="btn-ghost">Próximo</button>
+        </div>
+      </div>
+    </div>
 
+    <!-- Slide 1: Login -->
+    <div class="slide" id="slide-1" data-index="1">
+      <div class="header"><h1>Login</h1><div class="subtitle">Slide 1</div></div>
+      <div class="content">
+        <div style="display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;">
+          <div class="center" style="flex:1;min-width:280px;">
+            <div class="inputs">
+              <label for="name">Nome</label>
+              <input id="name" type="text" placeholder="Seu nome (ex.: Benedito)" />
+              <label for="code">Código do Curso</label>
+              <input id="code" type="text" placeholder="Ex.: 1223334444 ou admin" />
+              <div style="display:flex;gap:8px;margin-top:6px;">
+                <button id="btn-login">Entrar</button>
+                <button id="btn-clear" class="btn-ghost small">Limpar</button>
+              </div>
+              <div id="login-msg" style="margin-top:8px"></div>
+            </div>
+          </div>
+          <div style="flex:1;min-width:260px">
+            <div class="card">
+              <h3>Instruções</h3>
+              <ul style="color:var(--muted);margin:8px 0 0;padding-left:18px">
+                <li><strong>Benedito / admin</strong> → acesso direto aos logs.</li>
+                <li>Código <strong>1223334444</strong> (qualquer nome) → acesso ao menu (Slide 2).</li>
+                <li>Qualquer outro código → mensagem de erro.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:auto" class="muted">Os acessos são registrados no relatório (persistente no navegador).</div>
+      </div>
+      <div class="footer-bar">
+        <div class="slide-number">Slide 1</div>
+        <div class="nav-btns">
+          <button id="prev-1" class="btn-ghost">Voltar</button>
+          <button id="next-1" class="btn-ghost">Próximo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Menu -->
+    <div class="slide" id="slide-2" data-index="2">
+      <div class="header"><h1>Menu do Curso</h1><div class="subtitle">Slide 2</div></div>
+      <div class="content">
+        <div style="display:flex;gap:18px;flex-direction:column;height:100%">
+          <div class="muted">Selecione um dos slides vazios abaixo:</div>
+          <div class="slides-grid" id="menu-links"></div>
+          <div style="margin-top:auto;display:flex;gap:8px;align-items:center;">
+            <button id="view-logs" class="small">Ver Relatório (Logs)</button>
+            <button id="export-logs" class="btn-ghost small">Exportar Logs (.json)</button>
+            <div style="flex:1"></div>
+            <div class="muted">Slides vazios: 15 (Slides 3 a 17)</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <div class="slide-number">Slide 2</div>
+        <div class="nav-btns">
+          <button id="prev-2" class="btn-ghost">Voltar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slides 3..17: vazios com botão Voltar ao Menu -->
+    <!-- Gerados pelo JS -->
+    <div id="slides-container"></div>
+
+    <!-- Modal logs -->
+    <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true">
+      <div class="modal" role="document">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div><h2 style="margin:0">Relatório de Acessos</h2><div class="muted">Registros salvos no navegador</div></div>
+          <div style="display:flex;gap:8px">
+            <button id="download-logs" class="small btn-ghost">Download JSON</button>
+            <button id="clear-logs" class="small">Limpar Logs</button>
+            <button id="close-modal" class="btn-ghost small">Fechar</button>
+          </div>
+        </div>
+        <div id="logs-list" style="border-radius:8px;background:rgba(0,0,0,0.03);padding:8px;max-height:60vh;overflow:auto;"></div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+/* ---------- Config / Estado ---------- */
+const TOTAL_SLIDES = 18; // slides 0..17
+const slides = [];
+let activeIndex = 0;
+const logsKey = 'courseLogs_v1';
+
+/* ---------- Helpers ---------- */
+function $(sel){return document.querySelector(sel)}
+function renderSlides(){
+  // Create slides 3..17 programmatically
+  const container = $('#slides-container');
+  for(let i=3;i<=17;i++){
+    const div = document.createElement('div');
+    div.className = 'slide';
+    div.id = 'slide-' + i;
+    div.dataset.index = i;
+    div.innerHTML = `
+      <div class="header"><h1>Slide ${i}</h1><div class="subtitle">Slide vazio</div></div>
+      <div class="content">
+        <div style="display:flex;flex-direction:column;gap:10px;height:100%">
+          <div class="center" style="flex:1">
+            <div style="text-align:center;color:var(--muted)">
+              <h2>Conteúdo do Slide ${i}</h2>
+              <p>Este é um slide vazio. Você pode adicionar conteúdo manualmente editando o HTML ou usando este espaço.</p>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:8px">
+            <div class="muted">Slide ${i} de ${TOTAL_SLIDES-1}</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-ghost small btn-prev">Voltar</button>
+              <button class="small btn-backmenu">Voltar ao Menu (Slide 2)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  }
+}
+
+function showSlide(index){
+  // clamp 0..TOTAL_SLIDES-1
+  if(index < 0) index = 0;
+  if(index > TOTAL_SLIDES-1) index = TOTAL_SLIDES-1;
+  activeIndex = index;
+  document.querySelectorAll('.slide').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById('slide-' + index);
+  if(el) el.classList.add('active');
+}
+
+function addLog(entry){
+  const arr = JSON.parse(localStorage.getItem(logsKey) || '[]');
+  arr.push(entry);
+  localStorage.setItem(logsKey, JSON.stringify(arr));
+}
+
+function getLogs(){ return JSON.parse(localStorage.getItem(logsKey) || '[]'); }
+function clearLogs(){ localStorage.removeItem(logsKey); }
+
+/* ---------- Init UI ---------- */
+renderSlides();
+showSlide(0);
+
+// Populate menu links for slides 3..17
+const menu = $('#menu-links');
+for(let i=3;i<=17;i++){
+  const c = document.createElement('div');
+  c.className = 'card';
+  c.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+    <div><strong>Slide ${i}</strong><div class="muted" style="font-size:12px">Conteúdo vazio</div></div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="small btn-open" data-to="${i}">Abrir</button>
+    </div>
+  </div>`;
+  menu.appendChild(c);
+}
+
+/* ---------- Event bindings ---------- */
+// Slide 0
+$('#btn-access').addEventListener('click',()=>showSlide(1));
+$('#next-0').addEventListener('click',()=>showSlide(1));
+
+// Slide 1
+$('#prev-1').addEventListener('click',()=>showSlide(0));
+$('#next-1').addEventListener('click',()=>showSlide(2));
+$('#btn-clear').addEventListener('click',()=>{
+  $('#name').value='';$('#code').value='';$('#login-msg').innerHTML='';
+});
+$('#btn-login').addEventListener('click',handleLogin);
+$('#name').addEventListener('keypress',e=>{ if(e.key==='Enter') handleLogin(); });
+$('#code').addEventListener('keypress',e=>{ if(e.key==='Enter') handleLogin(); });
+
+function handleLogin(){
+  const name = $('#name').value.trim();
+  const code = $('#code').value.trim();
+  const timestamp = new Date().toISOString();
+  if(name === '' || code === ''){
+    $('#login-msg').innerHTML = '<div class="error">Preencha nome e código.</div>';
+    addLog({time:timestamp,name,code,result:'erro: campos vazios'});
+    return;
+  }
+
+  // Case 1: Benedito + admin => logs
+  if(name === 'Benedito' && code === 'admin'){
+    addLog({time:timestamp,name,code,result:'acesso: logs (Benedito/admin)'});
+    openLogs();
+    return;
+  }
+
+  // Case 2: any name + 1223334444 => slide 2
+  if(code === '1223334444'){
+    addLog({time:timestamp,name,code,result:'acesso: menu (código válido)'});
+    $('#login-msg').innerHTML = '<div style="color:var(--muted)">Acesso permitido. Redirecionando ao menu...</div>';
+    setTimeout(()=>{ showSlide(2); $('#login-msg').innerHTML=''; }, 500);
+    return;
+  }
+
+  // Otherwise invalid
+  $('#login-msg').innerHTML = '<div class="error">Código inválido.</div>';
+  addLog({time:timestamp,name,code,result:'erro: código inválido'});
+}
+
+// Slide 2
+$('#prev-2').addEventListener('click',()=>showSlide(1));
+$('#view-logs').addEventListener('click',openLogs);
+$('#export-logs').addEventListener('click',exportLogs);
+
+// Menu open slide buttons
+document.querySelectorAll('.btn-open').forEach(b=>{
+  b.addEventListener('click',(e)=>{
+    const to = parseInt(e.currentTarget.dataset.to,10);
+    showSlide(to);
+  });
+});
+
+// Slides 3..17: add event listeners for their buttons
+document.querySelectorAll('.btn-backmenu').forEach(b=>{
+  b.addEventListener('click',()=>showSlide(2));
+});
+document.querySelectorAll('.btn-prev').forEach(b=>{
+  b.addEventListener('click',()=>showSlide(activeIndex-1));
+});
+
+// Footer prev/next from other slides (some exist in templates)
+document.getElementById('prev-1').addEventListener('click',()=>showSlide(0));
+document.querySelectorAll('.slide').forEach(s=>{
+  const prevBtns = s.querySelectorAll('.btn-prev');
+  prevBtns.forEach(pb=>pb.addEventListener('click',()=>showSlide(parseInt(s.dataset.index,10)-1)));
+});
+
+// Modal controls
+$('#close-modal').addEventListener('click',closeModal);
+$('#modal').addEventListener('click', (e)=>{ if(e.target.id === 'modal') closeModal(); });
+$('#clear-logs').addEventListener('click', ()=>{
+  if(!confirm('Deseja realmente limpar todos os logs?')) return;
+  clearLogs();
+  renderLogs();
+});
+$('#download-logs').addEventListener('click',downloadLogs);
+$('#download-logs').addEventListener('click',downloadLogs);
+
+// Keyboard navigation
+document.addEventListener('keydown',(e)=>{
+  if(document.activeElement && ['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
+    // do not hijack when typing
+    return;
+  }
+  if(e.key==='ArrowRight'){ showSlide(Math.min(activeIndex+1, TOTAL_SLIDES-1)); }
+  if(e.key==='ArrowLeft'){ showSlide(Math.max(activeIndex-1, 0)); }
+});
+
+// Open logs UI
+function openLogs(){
+  renderLogs();
+  $('#modal').style.display='flex';
+}
+
+// Close
+function closeModal(){ $('#modal').style.display='none'; }
+
+// Render logs inside modal
+function renderLogs(){
+  const container = $('#logs-list');
+  const arr = getLogs();
+  if(arr.length === 0){
+    container.innerHTML = '<div class="muted" style="padding:12px">Nenhum log ainda.</div>';
+    return;
+  }
+  container.innerHTML = arr.map((r,idx)=>`
+    <div class="log-row">
+      <div style="min-width:220px"><strong>#${idx+1}</strong> <div class="muted">${new Date(r.time).toLocaleString()}</div></div>
+      <div style="flex:1">${escapeHtml(r.name || '')}</div>
+      <div style="min-width:150px" class="muted">${escapeHtml(r.code || '')}</div>
+      <div style="min-width:220px;text-align:right">${escapeHtml(r.result || '')}</div>
+    </div>
+  `).join('');
+}
+
+// Simple escape
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+// Export / download logs
+function exportLogs(){
+  const data = JSON.stringify(getLogs(), null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'logs-course.json'; document.body.appendChild(a); a.click();
+  a.remove(); URL.revokeObjectURL(url);
+}
+function downloadLogs(){
+  exportLogs();
+}
+
+/* Initialize render of any dynamic parts */
+renderLogs(); // in case
+</script>
+</body>
+  </html>
