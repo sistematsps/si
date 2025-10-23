@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini WhatsApp - Chat</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Container principal */
+    .app {
+      width: 90%;
+      max-width: 1200px;
+      height: 90vh;
+      display: flex;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    /* Painel de contatos */
+    #contacts {
+      width: 30%;
+      background: #ffffff;
+      border-right: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .contacts-header {
+      background: #ededed;
+      padding: 15px;
+      font-weight: bold;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .search-bar {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .search-bar input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+
+    .contact {
+      padding: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #f1f1f1;
+      transition: background 0.2s;
+    }
+    .contact:hover {
+      background: #f5f5f5;
+    }
+    .contact img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+      object-fit: cover;
+    }
+    .contact-name {
+      font-weight: bold;
+    }
+
+    /* Área de chat */
+    #chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #e5ddd5;
+    }
+
+    #chat-header {
+      background: #ededed;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #ccc;
+    }
+
+    #chat-header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
+    #messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      max-width: 70%;
+      padding: 10px 15px;
+      border-radius: 15px;
+      margin-bottom: 8px;
+      line-height: 1.4;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+      position: relative;
+      word-wrap: break-word;
+    }
+    .sent {
+      background: #dcf8c6;
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+    }
+    .received {
+      background: #fff;
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+    }
+
+    /* Área de entrada */
+    #input-area {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: #f0f0f0;
+      border-top: 1px solid #ddd;
+    }
+    #message-input {
+      flex: 1;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+    #send-btn {
+      background: #00a884;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      margin-left: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #send-btn:hover {
+      background: #029272;
+    }
+
+    /* Tela de login */
+    #login-screen {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    #logout-btn {
+      background: #f44336;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      position: absolute;
+      right: 20px;
+      top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- TELA DE LOGIN -->
+  <div id="login-screen">
+    <form id="login-form">
+      <h2>Entrar no Chat</h2>
+      <input type="email" id="login-email" placeholder="E-mail" required />
+      <input type="password" id="login-senha" placeholder="Senha" required />
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+
+  <!-- TELA DO CHAT -->
+  <div class="app" id="chat-screen" style="display:none;">
+    <div id="contacts">
+      <div class="contacts-header">Contatos</div>
+      <div class="search-bar">
+        <input type="text" placeholder="Buscar contato..." id="searchInput">
+      </div>
+      <div id="contacts-list"></div>
+    </div>
+
+    <div id="chat-area">
+      <div id="chat-header">
+        <img id="contact-photo" src="https://cdn-icons-png.flaticon.com/512/847/847969.png">
+        <span id="chat-contact-name">Selecione um contato</span>
+      </div>
+      <div id="messages"></div>
+      <div id="input-area">
+        <input type="text" id="message-input" placeholder="Digite uma mensagem..." />
+        <button id="send-btn">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, collection, query, where, getDocs, onSnapshot, updateDoc, setDoc, arrayUnion, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC0dUhymi72gkug-oo0-xqqBEtgvlIgvY0",
+      authDomain: "cursos-6f950.firebaseapp.com",
+      projectId: "cursos-6f950",
+      storageBucket: "cursos-6f950.appspot.com",
+      messagingSenderId: "146131122545",
+      appId: "1:146131122545:web:043f8207f457ad5b7f5ed0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const loginForm = document.getElementById("login-form");
+    const loginScreen = document.getElementById("login-screen");
+    const chatScreen = document.getElementById("chat-screen");
+    const contactsList = document.getElementById("contacts-list");
+    const messagesDiv = document.getElementById("messages");
+    const chatHeader = document.getElementById("chat-contact-name");
+    const msgInput = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-btn");
+
+    let currentUser = null;
+    let selectedContact = null;
+    let unsubscribeMessages = null;
+
+    // LOGIN
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = loginForm["login-email"].value;
+      const senha = loginForm["login-senha"].value;
+      try {
+        await signInWithEmailAndPassword(auth, email, senha);
+      } catch (err) {
+        alert("Erro: " + err.message);
+      }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        loginScreen.style.display = "none";
+        chatScreen.style.display = "flex";
+        await carregarContatos();
+      } else {
+        chatScreen.style.display = "none";
+        loginScreen.style.display = "block";
+      }
+    });
+
+    async function carregarContatos() {
+      contactsList.innerHTML = "";
+      const userRef = doc(db, "users", currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) return;
+      const userData = userSnap.data();
+
+      let q;
+      if (userData.funcao === "cliente") {
+        q = query(collection(db, "users"), where("funcao", "==", "vendedor"));
+      } else if (userData.funcao === "vendedor") {
+        q = query(collection(db, "users"), where("vinculos", "array-contains", currentUser.uid));
+      } else {
+        q = query(collection(db, "users"));
+      }
+
+      const snapshot = await getDocs(q);
+      snapshot.forEach(docSnap => {
+        const u = docSnap.data();
+        if (u.email !== currentUser.email) {
+          const div = document.createElement("div");
+          div.classList.add("contact");
+          div.innerHTML = `
+            <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png">
+            <div class="contact-name">${u.nome}</div>
+          `;
+          div.onclick = () => abrirChat(docSnap.id, u.nome);
+          contactsList.appendChild(div);
+        }
+      });
+    }
+
+    async function abrirChat(contactId, contactName) {
+      selectedContact = contactId;
+      chatHeader.textContent = contactName;
+      messagesDiv.innerHTML = "";
+
+      if (unsubscribeMessages) unsubscribeMessages();
+
+      const chatId = [currentUser.uid, contactId].sort().join("_");
+      const chatRef = doc(db, "chats", chatId);
+
+      unsubscribeMessages = onSnapshot(chatRef, (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        const mensagens = data.mensagens || [];
+        messagesDiv.innerHTML = "";
+        mensagens.forEach(msg => {
+          const div = document.createElement("div");
+          div.classList.add("message", msg.de === currentUser.uid ? "sent" : "received");
+          div.textContent = msg.texto;
+          messagesDiv.appendChild(div);
+        });
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      });
+    }
+
+    async function enviarMensagem() {
+      const texto = msgInput.value.trim();
+      if (!texto || !selectedContact) return;
+
+      const chatId = [currentUser.uid, selectedContact].sort().join("_");
+      const chatRef = doc(db, "chats", chatId);
+
+      await setDoc(chatRef, {
+        mensagens: arrayUnion({
+          texto,
+          de: currentUser.uid,
+          para: selectedContact,
+          timestamp: serverTimestamp()
+        })
+      }, { merge: true });
+
+      msgInput.value = "";
+    }
+
+    sendBtn.onclick = enviarMensagem;
+    msgInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") enviarMensagem();
+    });
+  </script>
+</body>
+</html>
